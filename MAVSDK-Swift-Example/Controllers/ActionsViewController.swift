@@ -1,5 +1,6 @@
 import UIKit
 import Mavsdk
+import RxSwift
 
 let UI_CORNER_RADIUS_BUTTONS = CGFloat(8.0)
 
@@ -37,6 +38,7 @@ class ActionsViewController: UIViewController {
         transitionToMulticopterButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
         getTakeoffAltitudeButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
         getMaxSpeedButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
+        getMaxSpeedButton.setTitle("Test", for: .normal)
     }
     
     @IBAction func armPressed(_ sender: Any) {
@@ -92,15 +94,36 @@ class ActionsViewController: UIViewController {
     }
 
     @IBAction func getMaximumSpeedPressed(_ sender: Any) {
-        _ = drone!.action.getMaximumSpeed()
-            .do(onSuccess: { speed in self.feedbackLabel.text = "Maximum speed: \(speed)" },
-                onError: { error in self.feedbackLabel.text = "Get Maximum Speed Failure: \(error)" })
-            .subscribe()
+        test()
     }
 
     class func showAlert(_ message: String?, viewController: UIViewController?) {
         let alert = UIAlertController(title: message, message: "", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
         viewController?.present(alert, animated: true) {() -> Void in }
+    }
+    
+    func test() {
+        // Subscribing to camera status + a few more camera subscriptions
+        // causes significant slowing down in sending other commands to the vehicle.
+        _ = drone!.camera.status.subscribe()
+        
+        _ = drone!.camera.videoStreamInfo.subscribe()
+        _ = drone!.camera.information.subscribe()
+        _ = drone!.camera.mode.subscribe()
+        _ = drone!.camera.captureInfo.subscribe()
+        _ = drone!.camera.currentSettings.subscribe()
+        _ = drone!.camera.possibleSettingOptions.subscribe()
+        
+        let arm1 = drone!.action.arm()
+        let arm2 = drone!.action.disarm().delaySubscription(.seconds(120), scheduler: MainScheduler.instance)
+        
+        _ = Completable.concat([arm1, arm2])
+            .do(onError: { error in
+                self.feedbackLabel.text = "Subscription error: \(error.localizedDescription)"
+            }, onCompleted: {
+                self.feedbackLabel.text = "Subscription completed"
+            })
+            .subscribe()
     }
 }
