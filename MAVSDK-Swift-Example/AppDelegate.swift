@@ -11,7 +11,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var mavsdkServer = MavsdkServer()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        let port = mavsdkServer.run(systemAddress: "tcp://3.227.211.180:5790")
+        let port = mavsdkServer.run(systemAddress: "tcp://3.237.22.180:5790")
         drone = Drone(port: Int32(port))
 
         return true

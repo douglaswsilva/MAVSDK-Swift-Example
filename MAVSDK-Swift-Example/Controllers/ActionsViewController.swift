@@ -17,6 +17,8 @@ class ActionsViewController: UIViewController {
     @IBOutlet weak var getMaxSpeedButton: UIButton!
     
     @IBOutlet weak var feedbackLabel: UILabel!
+    
+    var check: PreflightCheck?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +40,9 @@ class ActionsViewController: UIViewController {
         transitionToMulticopterButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
         getTakeoffAltitudeButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
         getMaxSpeedButton.layer.cornerRadius = UI_CORNER_RADIUS_BUTTONS
-        getMaxSpeedButton.setTitle("Test", for: .normal)
+        
+        getMaxSpeedButton.setTitle("Start Checks", for: .normal)
+        check = PreflightCheck()
     }
     
     @IBAction func armPressed(_ sender: Any) {
@@ -94,40 +98,12 @@ class ActionsViewController: UIViewController {
     }
 
     @IBAction func getMaximumSpeedPressed(_ sender: Any) {
-        test()
+        check?.preflightCheckListQueue()
     }
 
     class func showAlert(_ message: String?, viewController: UIViewController?) {
         let alert = UIAlertController(title: message, message: "", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
         viewController?.present(alert, animated: true) {() -> Void in }
-    }
-    
-    func test() {
-        // 1. Subscribe to camera status
-        _ = drone!.camera.status.subscribe()
-        
-        // 2. Subscribe to other camera observables
-        _ = drone!.camera.videoStreamInfo.subscribe()
-        _ = drone!.camera.information.subscribe()
-        _ = drone!.camera.mode.subscribe()
-        _ = drone!.camera.captureInfo.subscribe()
-        _ = drone!.camera.currentSettings.subscribe()
-        _ = drone!.camera.possibleSettingOptions.subscribe()
-        
-        // 3. Send some actions
-        let arm1 = drone!.action.arm()
-        let arm2 = drone!.action.disarm().delaySubscription(.seconds(120), scheduler: MainScheduler.instance)
-        
-        _ = Completable.concat([arm1, arm2])
-            .do(onError: { error in
-                self.feedbackLabel.text = "Subscription error: \(error.localizedDescription)"
-            }, onCompleted: {
-                self.feedbackLabel.text = "Subscription completed"
-            })
-            .subscribe()
-        
-        // 4. After action completes (~2 min), try to play around with other commands, they will be very slow.
-        // For example, upload and start mission will take a long time to execute.
     }
 }
