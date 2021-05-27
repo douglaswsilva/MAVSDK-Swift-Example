@@ -104,10 +104,10 @@ class ActionsViewController: UIViewController {
     }
     
     func test() {
-        // Subscribing to camera status + a few more camera subscriptions
-        // causes significant slowing down in sending other commands to the vehicle.
+        // 1. Subscribe to camera status
         _ = drone!.camera.status.subscribe()
         
+        // 2. Subscribe to other camera observables
         _ = drone!.camera.videoStreamInfo.subscribe()
         _ = drone!.camera.information.subscribe()
         _ = drone!.camera.mode.subscribe()
@@ -115,6 +115,7 @@ class ActionsViewController: UIViewController {
         _ = drone!.camera.currentSettings.subscribe()
         _ = drone!.camera.possibleSettingOptions.subscribe()
         
+        // 3. Send some actions
         let arm1 = drone!.action.arm()
         let arm2 = drone!.action.disarm().delaySubscription(.seconds(120), scheduler: MainScheduler.instance)
         
@@ -125,5 +126,8 @@ class ActionsViewController: UIViewController {
                 self.feedbackLabel.text = "Subscription completed"
             })
             .subscribe()
+        
+        // 4. After action completes (~2 min), try to play around with other commands, they will be very slow.
+        // For example, upload and start mission will take a long time to execute.
     }
 }
